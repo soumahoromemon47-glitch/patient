@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+.dark { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; }
+button, input, select, textarea { font: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #65b99e; outline-offset: 2px; }
+.touch-button { min-height: 42px; }
+.form-control { width: 100%; min-height: 46px; border: 1px solid #d5ded9; border-radius: .7rem; background: white; padding: .7rem .85rem; color: #172d2b; }
+.dark .form-control { border-color: #3a514b; background: #192a26; color: #e8f0ed; }
+.card { border: 1px solid rgba(120,140,130,.17); border-radius: 1rem; background: white; box-shadow: 0 8px 30px rgba(23,45,43,.07); }
+.dark .card { background: #172522; box-shadow: none; }
