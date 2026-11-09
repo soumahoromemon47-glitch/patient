@@ -56,4 +56,4 @@ La clé `service_role` ne doit jamais être ajoutée à l’application cliente 
 - `/fiches/nouvelle` : saisie guidée par sections et sauvegarde en brouillon
 - `/fiches/[id]` : consultation, modification, suppression et PDF
 - `/tableau-de-bord` : indicateurs et graphiques sur les fiches complètes
-- `/export` : CSV UTF-8 BOM, XLSX et dictionnaire de variables
+- `/export` : CSV UTF-8 BOM, XLSX et PDF ; plusieurs fiches PDF sont regroupées dans une archive ZIP

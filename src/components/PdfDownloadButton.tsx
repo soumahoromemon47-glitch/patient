@@ -23,7 +23,7 @@ function valueText(value: unknown, type: string, options?: string[]) {
   return value === null || value === undefined || value === "" ? "—" : typeof value === "boolean" ? (value ? "☑ Oui" : "☐ Non") : String(value);
 }
 
-function FichePdf({ fiche }: { fiche: Fiche }) {
+export function FichePdf({ fiche }: { fiche: Fiche }) {
   return <Document title={`Fiche ${fiche.numero_fiche}`} author="CHU d’Angré">
     <Page size="A4" style={styles.page}>
       <Text style={styles.title}>FICHE D’ENQUÊTE — RISQUE DE CHUTE</Text>

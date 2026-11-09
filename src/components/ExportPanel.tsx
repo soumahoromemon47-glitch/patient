@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { pdf } from "@react-pdf/renderer";
 import * as XLSX from "xlsx";
+import JSZip from "jszip";
 import { allFields, formSchema } from "@/config/formSchema";
 import { calculerTrancheAge } from "@/lib/calculs";
 import { createClient } from "@/lib/supabase/client";
 import type { Fiche } from "@/lib/types";
+import { FichePdf } from "@/components/PdfDownloadButton";
 
 function download(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -13,7 +16,12 @@ function download(blob: Blob, filename: string) {
   anchor.href = url;
   anchor.download = filename;
   anchor.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function safeFilename(value: string) {
+  return value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "sans-numero";
 }
 
 type ExportField = { key: string; label: string; type: string; options?: string[] };
@@ -44,6 +52,7 @@ export default function ExportPanel() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [sex, setSex] = useState("");
+  const [exportingPdfs, setExportingPdfs] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -88,6 +97,32 @@ export default function ExportPanel() {
     XLSX.utils.book_append_sheet(book, XLSX.utils.json_to_sheet(dictionary), "Dictionnaire des variables");
     XLSX.writeFile(book, `fiches-chute-${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
+  async function downloadPdfs() {
+    if (!selectedFiches.length || exportingPdfs) return;
+    setExportingPdfs(true);
+    setError("");
+    try {
+      const date = new Date().toISOString().slice(0, 10);
+      if (selectedFiches.length === 1) {
+        const fiche = selectedFiches[0];
+        const blob = await pdf(<FichePdf fiche={fiche} />).toBlob();
+        download(blob, `fiche-chute-${safeFilename(fiche.numero_fiche)}.pdf`);
+        return;
+      }
+
+      const archive = new JSZip();
+      for (const fiche of selectedFiches) {
+        const blob = await pdf(<FichePdf fiche={fiche} />).toBlob();
+        archive.file(`fiche-chute-${safeFilename(fiche.numero_fiche)}.pdf`, blob);
+      }
+      const blob = await archive.generateAsync({ type: "blob", compression: "DEFLATE" });
+      download(blob, `fiches-chute-${date}.zip`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "La génération des PDF a échoué.");
+    } finally {
+      setExportingPdfs(false);
+    }
+  }
   if (loading) return <p className="py-16 text-center text-slate-500">Chargement des fiches…</p>;
   return <div className="mx-auto max-w-4xl">
     <p className="text-sm font-semibold uppercase tracking-wide text-forest dark:text-[#8bd1bb]">Données de l’étude</p><h1 className="mt-1 text-3xl font-bold">Export</h1><p className="mt-2 text-slate-500">Export tabulaire, une ligne par fiche et une colonne par variable du schéma.</p>
@@ -99,7 +134,7 @@ export default function ExportPanel() {
       </div>
       <fieldset className="mt-5 rounded-xl border p-4 dark:border-slate-700"><legend className="px-2 text-sm font-medium">Filtre actuel (pour l’option « résultat du filtre »)</legend><div className="grid gap-3 sm:grid-cols-3"><label className="text-xs text-slate-500">Du<input type="date" className="form-control mt-1" value={from} onChange={(e) => setFrom(e.target.value)} /></label><label className="text-xs text-slate-500">Au<input type="date" className="form-control mt-1" value={to} onChange={(e) => setTo(e.target.value)} /></label><label className="text-xs text-slate-500">Sexe<select className="form-control mt-1" value={sex} onChange={(e) => setSex(e.target.value)}><option value="">Tous</option><option>Masculin</option><option>Féminin</option></select></label></div></fieldset>
       <p className="mt-4 text-sm text-slate-500">{selectedFiches.length} fiche(s) sélectionnée(s) · {columns.length} variables.</p>
-      <div className="mt-5 flex flex-wrap gap-3"><button onClick={downloadCsv} disabled={!selectedFiches.length} className="touch-button rounded-xl bg-forest px-5 py-3 font-semibold text-white disabled:opacity-40">⇩ Télécharger CSV</button><button onClick={downloadExcel} disabled={!selectedFiches.length} className="touch-button rounded-xl border px-5 py-3 font-semibold disabled:opacity-40">⇩ Télécharger Excel (.xlsx)</button></div>
+      <div className="mt-5 flex flex-wrap gap-3"><button onClick={downloadCsv} disabled={!selectedFiches.length || exportingPdfs} className="touch-button rounded-xl bg-forest px-5 py-3 font-semibold text-white disabled:opacity-40">⇩ Télécharger CSV</button><button onClick={downloadExcel} disabled={!selectedFiches.length || exportingPdfs} className="touch-button rounded-xl border px-5 py-3 font-semibold disabled:opacity-40">⇩ Télécharger Excel (.xlsx)</button><button onClick={() => void downloadPdfs()} disabled={!selectedFiches.length || exportingPdfs} className="touch-button rounded-xl border px-5 py-3 font-semibold disabled:opacity-40">{exportingPdfs ? "Préparation des PDF…" : selectedFiches.length > 1 ? `⇩ Télécharger ${selectedFiches.length} PDF en ZIP` : "⇩ Télécharger en PDF"}</button></div>
       <div className="mt-6 rounded-lg bg-sand p-4 text-sm text-slate-600 dark:bg-[#101b1a] dark:text-slate-300"><p><strong>CSV :</strong> séparateur point-virgule, encodage UTF-8 avec BOM pour Excel français.</p><p className="mt-1"><strong>Excel :</strong> inclut une feuille « Dictionnaire des variables » avec les modalités codées.</p></div>
     </section>
   </div>;
