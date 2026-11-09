@@ -100,7 +100,14 @@ export default function FicheForm({ fiche }: { fiche?: Fiche }) {
     await handleSubmit(async () => {
       const id = await save("complete");
       if (id) window.location.assign(`/fiches/${id}`);
-    }, () => setError("Vérifiez les champs signalés avant de terminer."))();
+    }, (formErrors) => {
+      setError("Vérifiez le champ signalé à l’étape affichée avant de terminer.");
+      const invalidStep = formSchema.findIndex((section) =>
+        section.fields.some((field) => Boolean(formErrors[field.key])),
+      );
+      if (invalidStep >= 0) setStep(invalidStep);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    })();
   }
 
   function renderField(field: (typeof formSchema)[number]["fields"][number]) {

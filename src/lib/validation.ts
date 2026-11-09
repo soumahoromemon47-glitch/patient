@@ -8,7 +8,12 @@ const fieldRules = Object.fromEntries(dataFields.map((field) => {
         || ((field.min === undefined || value >= field.min) && (field.max === undefined || value <= field.max)),
       `${field.label} doit être compris entre ${field.min ?? "la valeur minimale"} et ${field.max ?? "la valeur maximale"}.`,
     );
-    return [field.key, z.preprocess((value) => value === "" || value === null ? undefined : typeof value === "number" ? value : Number(value), numberRule)];
+    return [field.key, z.preprocess(
+      (value) => value === undefined || value === "" || value === null
+        ? undefined
+        : typeof value === "number" ? value : Number(value),
+      numberRule,
+    )];
   }
   if (field.type === "single" || field.type === "yesno") {
     const options = field.options ?? [];
