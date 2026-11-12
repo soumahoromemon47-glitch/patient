@@ -187,7 +187,7 @@ export const formSchema: FormSection[] = [
         computed: true,
       },
       ...[
-        ["acuite_visuelle_baisse", "Baisse de l’acuité visuelle"],
+        ["acuite_visuelle_baisse", "Baisse de l’acuité visuelle non corrigé"],
         ["audition_trouble", "Trouble de l’audition"],
         ["tnc", "Trouble neurocognitif (TNC)"],
         ["depression_iv", "Dépression"],
@@ -296,6 +296,27 @@ export const formSchema: FormSection[] = [
       },
       ouiNonField("reduction_apport", "Réduction des apports"),
       {
+        key: "pa_assis_sys",
+        label: "Pression artérielle systolique en position assise",
+        type: "number",
+        unit: "mmHg",
+        min: 1,
+      },
+      {
+        key: "pa_assis_dia",
+        label: "Pression artérielle diastolique en position assise",
+        type: "number",
+        unit: "mmHg",
+        min: 1,
+      },
+      {
+        key: "pam_assis",
+        label: "Pression artérielle moyenne en position assise (PAM)",
+        type: "computed",
+        computed: true,
+        unit: "mmHg",
+      },
+      {
         key: "fc",
         label: "Fréquence cardiaque",
         type: "number",
@@ -303,8 +324,9 @@ export const formSchema: FormSection[] = [
         min: 20,
         max: 250,
       },
-
       { key: "exam_neuro", label: "Examen neurologique", type: "text" },
+      ouiNonField("arthrose_examen", "Arthrose à l’examen ostéoarticulaire"),
+      ouiNonField("deficit_visuel_examen", "Déficit visuel à l’examen neurosensoriel"),
     ],
   },
   {
